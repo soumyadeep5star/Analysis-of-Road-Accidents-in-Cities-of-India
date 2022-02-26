@@ -1,0 +1,309 @@
+---
+title: "Analysis of Road Accidents in Cities of India"
+author:
+  - SOUMYADEEP ADHIKARY
+  - (HALDIA INSTITUTE OF TECHNOLOGY)
+     
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# INTRODUCTION
+
+**" Roads and Highways are the backbone of connectivity in an economy "**
+
+Road accidents in India takes away more than 90,000 lives a year.It is a major concern for developing countries like India.So a case study is made to analyse the pattern of road accidents in the cities of India.This type of case study will help Ministry of Road Transport and Highways and other goverment agencies to monitor the situation and take necessary steps.
+
+Versions:   Rstudio(2021.9.2.382)  ,  R version 4.1.2(2021-11-01)
+            
+libraries used: *ggplot2*,*dplyr*,*superml*,*psych*            
+            
+
+# Importing the libraries
+
+```{r results='hide'}
+library(ggplot2)
+library(dplyr)
+library(superml)
+library(psych)
+```
+
+# Loading the dataset
+
+```{r}
+train <- read.csv("Road_Accident.csv",header = TRUE)
+```
+
+# Printing sample data of 5 rows
+
+```{r}
+sample_n(train,5)
+```
+
+# To know the datatypes of variables of the dataset
+
+```{r}
+str(train)
+```
+
+# To find missing values in the dataset
+
+```{r}
+lapply(train, function(x){length(which(is.na(x)))})
+```
+
+# Eliminating the last row from the dataset
+
+```{r}
+train <- train[-c(52),]
+```
+
+# To have a summary of the dataset
+
+```{r}
+print(summary(train))
+```
+
+# Filling the missing values using median values of each variable column
+
+```{r}
+for (i in 2:30) { x=median(train[,i],na.rm = TRUE)
+  train[,i][is.na(train[,i])] <- x
+  
+}
+```
+
+# Encoding the first variable of the dataset
+
+```{r}
+label <- LabelEncoder$new()
+train$Name.of.City <- label$fit_transform(train$Name.of.City)
+```
+
+# Decoding the first variable
+
+```{r}
+decode_names <- label$inverse_transform(train$Name.of.City)
+decode_names
+```
+
+# Adding new variables to the dataset
+
+```{r  results='hide'}
+train$total_fatal_accidents <- train$Total.number.of.Fatal.Accidents...2011 + 
+  train$Total.number.of.Fatal.Accidents...2012 +
+  train$Fatal.Accidents...2013+ train$Fatal.Accidents...2014+
+  train$Fatal.Accidents...2015
+
+train$total_accidents <- train$All.Accidents...2011 + train$All.Accidents...2012+
+  train$Total.Accidents...2013 + train$Total.Accidents...2014 +train$Total.Accidents...2015
+   
+train$total_person_killed <- train$Persons.Killed...2011 +train$Persons.Killed...2012+
+  train$Killed...2013 + train$Killed...2014 + train$Killed...2015
+
+train$total_person_injured <- train$Persons.Injured...2011 + train$Persons.Injured...2012
+ + train$Injured...2013 + train$Injured...2014 + train$Injured...2015
+```
+
+# Classifying total_person_killed into groups("High","Moderate","Low")
+
+## Calculating percentile of total_person_killed
+
+```{r}
+Percentile_00  = min(train$total_person_killed)
+Percentile_33  = quantile(train$total_person_killed, 0.33333)
+Percentile_67  = quantile(train$total_person_killed, 0.66667)
+Percentile_100 = max(train$total_person_killed)
+
+RB = rbind(Percentile_00, Percentile_33, Percentile_67, Percentile_100)
+
+dimnames(RB)[[2]] = "Value"
+
+RB
+```
+
+## Creating a column classifying persons_killed
+
+```{r}
+train$total_person_killed_class[train$total_person_killed >= Percentile_00 & train$total_person_killed <  Percentile_33]  = "Low"
+train$total_person_killed_class[train$total_person_killed >= Percentile_33 & train$total_person_killed <  Percentile_67]  = "Moderate"
+train$total_person_killed_class[train$total_person_killed >= Percentile_67 & train$total_person_killed <= Percentile_100] = "High"
+```
+
+# Classifying total_person_injured into groups("High","Moderate","Low")
+
+## Calculating percentile of total_person_injured
+
+```{r}
+Percentile_00  = min(train$total_person_injured)
+Percentile_33  = quantile(train$total_person_injured, 0.33333)
+Percentile_67  = quantile(train$total_person_injured, 0.66667)
+Percentile_100 = max(train$total_person_injured)
+
+RB = rbind(Percentile_00, Percentile_33, Percentile_67, Percentile_100)
+
+dimnames(RB)[[2]] = "Value"
+
+RB
+```
+
+## Creating a column classifying persons_injured
+
+```{r}
+train$total_person_injured_class[train$total_person_injured >= Percentile_00 & train$total_person_injured <  Percentile_33]  = "Low"
+train$total_person_injured_class[train$total_person_injured >= Percentile_33 & train$total_person_injured <  Percentile_67]  = "Moderate"
+train$total_person_injured_class[train$total_person_injured >= Percentile_67 & train$total_person_injured <= Percentile_100] = "High"
+```
+
+# Classifying total_fatal_accidents into groups("High","Moderate","Low")
+
+## Calculating percentile of total_fatal_accidents
+
+```{r}
+Percentile_00  = min(train$total_fatal_accidents)
+Percentile_33  = quantile(train$total_fatal_accidents, 0.33333)
+Percentile_67  = quantile(train$total_fatal_accidents, 0.66667)
+Percentile_100 = max(train$total_fatal_accidents)
+
+RB = rbind(Percentile_00, Percentile_33, Percentile_67, Percentile_100)
+
+dimnames(RB)[[2]] = "Value"
+
+RB
+```
+
+## Creating a column classifying persons_injured
+
+```{r}
+train$total_fatal_accidents_class[train$total_fatal_accidents >= Percentile_00 & train$total_fatal_accidents <  Percentile_33]  = "Low"
+train$total_fatal_accidents_class[train$total_fatal_accidents >= Percentile_33 & train$total_fatal_accidents <  Percentile_67]  = "Moderate"
+train$total_fatal_accidents_class[train$total_fatal_accidents >= Percentile_67 & train$total_fatal_accidents <= Percentile_100] = "High"
+```
+
+# Printing most important columns of the dataset for analysis
+
+```{r}
+select(train,31:37)
+```
+
+# Printing data according to the year
+
+```{r}
+select(train,contains("2011"))
+
+select(train,contains("2012"))
+
+select(train,contains("2013"))
+
+select(train,contains("2014"))
+
+select(train,contains("2015"))
+```
+
+# Making visualisation of dataset
+
+## Making visualisation of total_accidents along with total_person_killed_class
+
+```{r}
+ggplot(data = train) + 
+  geom_point(mapping = aes(x = Name.of.City, y = total_accidents, color = total_person_killed_class))
+```
+
+## Making visualisation of total_accidents along with total_fatal_accidents_class
+
+```{r}
+ggplot(data = train) + 
+  geom_point(mapping = aes(x = Name.of.City, y = total_accidents, color = total_fatal_accidents_class))
+```
+
+## Making visualisation of total_accidents along with total_person_injured_class
+
+```{r}
+ggplot(data = train) + 
+  geom_point(mapping = aes(x = Name.of.City, y = total_accidents, color = total_person_injured_class))
+```
+
+## Making visualisation with more details
+
+```{r results='hide'}
+ggplot(data = train) + 
+  geom_point(mapping = aes(x = Name.of.City, y = total_accidents,color = total_fatal_accidents_class)) +
+  geom_smooth(mapping = aes(x = Name.of.City, y = total_accidents,color = total_fatal_accidents_class))
+
+ggplot(data = train) + 
+  geom_point(mapping = aes(x = Name.of.City, y = total_accidents,color = total_person_killed_class)) +
+  geom_smooth(mapping = aes(x = Name.of.City, y = total_accidents,color = total_person_killed_class))
+
+ggplot(data = train) + 
+  geom_point(mapping = aes(x = Name.of.City, y = total_accidents,color = total_person_injured_class)) +
+  geom_smooth(mapping = aes(x = Name.of.City, y = total_accidents,color = total_person_injured_class))
+
+
+ggplot(data = train, mapping = aes(x = Name.of.City, y = total_accidents)) + 
+  geom_point(mapping = aes(color = total_person_injured_class)) + 
+  geom_smooth()
+```
+
+## Making bar_charts of the dataset
+
+```{r}
+ggplot(data = train) + 
+  geom_bar(mapping = aes(x = total_person_killed_class, fill = total_person_killed_class))
+
+ggplot(data = train) + 
+  geom_bar(mapping = aes(x = total_fatal_accidents_class,fill = total_fatal_accidents_class))
+
+ggplot(data = train) + 
+  geom_bar(mapping = aes(x = total_person_injured_class, fill =total_person_injured_class))
+
+```
+
+```{r}
+ggplot(data = train) + 
+  geom_bar(mapping = aes(x = total_fatal_accidents_class, fill = total_person_killed_class))
+
+ggplot(data = train) + 
+  geom_bar(mapping = aes(x = total_fatal_accidents_class, fill = total_person_injured_class))
+
+ggplot(data = train) + 
+   geom_bar(mapping = aes(x = total_fatal_accidents_class, fill = total_person_killed_class), position = "dodge")
+
+ggplot(data = train) + 
+   geom_bar(mapping = aes(x = total_fatal_accidents_class, fill = total_person_injured_class), position = "dodge")
+```
+
+# Results and Discussions
+
+It is observed that cities like **Delhi**,**Bengaluru**,**Indore**,**Mumbai**,**Chennai** has highest accident rate along with high fatal accidents rate and high person killed rate.On the other hand cities like **Dhanbad**,**Jamshedpur**,**Srinagar**,**Varanasi**,
+**Amritsar** has lowest accident rate.
+
+From the above observation it is clear that **metropoliton** cities has highest accident rate.
+
+From the results obtained we found some cities like **Agra**,**Ghaziabad**,**Lucknow**,
+**Patna**,**Meerut**,**Allahabad** and **Kanpur** inspite of having low accident rate those cities has high fatal accident rate as well as high person killed rate.
+
+So it can be said that those cities might be less populated and accidents occuring is very severe.The transportation system in this cities may be very bad or hospital facilities in this cities are bad due to which person killed rate is high.
+
+From the visualisation it is seen that total fatal accidents is directly proportional
+to total person killed.
+
+# Conclusion
+
+We know that transportation through roads and highways is very important as it helps our economy grow.Also we should ensure safety measures while traveling through this roads.The government and other agencies should look after this matter as it involves life of people and take necessary actions.
+
+# Reference
+
+Data source link,https://data.gov.in/catalog/road-accidents-profile-selected-cities
+
+Classification of Indian Cities, https://en.wikipedia.org/wiki/Classification_of_Indian_cities
+
+
+                                          
+    
+
+
+
+
