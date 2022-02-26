@@ -1,0 +1,2 @@
+# Analysis-of-Road-Accidents-in-Cities-of-India
+Road accidents in India takes away more than 90,000 lives a year.It is a major concern for developing countries like India.So a case study is made to analyse the pattern of road accidents in the cities of India.This type of case study will help Ministry of Road Transport and Highways and other goverment agencies to monitor the situation and take necessary steps.
